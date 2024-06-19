@@ -4,6 +4,8 @@ from decouple import config
 
 # App
 DEBUG = config("DEBUG", cast=bool)
+SECRET_KEY = config("SECRET_KEY")
+ADMIN_ID = config("ADMIN_ID", cast=int)
 
 # Postgres
 DB_NAME = config("DB_NAME")

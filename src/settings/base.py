@@ -24,3 +24,4 @@ session = async_sessionmaker(
 pool = redis.asyncio.ConnectionPool.from_url(url=REDIS_URL)
 aioredis = redis.asyncio.Redis(connection_pool=pool)
 logger = logging.getLogger(__name__)
+
