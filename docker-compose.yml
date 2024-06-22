@@ -1,0 +1,56 @@
+services:
+
+  postgres:
+    image: postgres
+    container_name: reminder-postgres
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    restart: always
+    networks:
+      - reminder-network
+
+  redis:
+    image: redis
+    container_name: reminder-redis
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - reminder-network
+
+  api:
+    build: .
+    container_name: reminder-api
+    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - reminder-network
+
+  nginx:
+    image: nginx
+    container_name: reminder-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - api
+    restart: always
+    networks:
+      - reminder-network
+
+networks:
+  reminder-network:
+
+volumes:
+  db_volume:
+
