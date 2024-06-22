@@ -4,7 +4,7 @@ services:
     image: postgres
     container_name: reminder-postgres
     volumes:
-      - ./data/db:/var/lib/postgresql/data
+      - db_volume:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
@@ -50,4 +50,7 @@ services:
 
 networks:
   reminder-network:
+
+volumes:
+  db_volume:
 
