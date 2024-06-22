@@ -12,7 +12,6 @@ app.include_router(router=users.router)
 app.include_router(router=events.router)
 
 
-if __name__ == "__main__":
-    uvicorn.run(app="main:app", reload=True)
+# if __name__ == "__main__":
+#     uvicorn.run(app="main:app", reload=True)
 
-    
