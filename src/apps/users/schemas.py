@@ -5,7 +5,8 @@ from pydantic import BaseModel, Field
 class UserSchema(BaseModel):
     id: int = Field(ge=0)
     telegram_id: int = Field(ge=0)
-    timezone: str = Field()
+    timezone: int = Field(ge=-11, le=13)
+    language: str = Field()
     username: str
     password: str
 
@@ -16,12 +17,14 @@ class UsersSchema(BaseModel):
 
 class CreateUserSchema(BaseModel):
     telegram_id: int = Field(ge=0)
-    timezone: str = Field()
+    language: str = Field()
+    timezone: int = Field(ge=-11, le=13)
 
 
 class CreateAdminSchema(BaseModel):
     telegram_id: int = Field(ge=0)
-    timezone: str = Field()
+    timezone: int = Field(ge=-11, le=13)
+    language: str = Field()
     username: str = Field(min_length=5, max_length=50)
     password: str = Field(min_length=10, max_length=32)
 

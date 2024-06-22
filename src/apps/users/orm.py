@@ -12,7 +12,7 @@ class UsersOrm:
 
     async def register_admin(
         self, telegram_id: int, username: str, 
-        hash_password: str, timezone: str
+        hash_password: str, timezone: int, language: str
     ) -> bool:
         if telegram_id == ADMIN_ID:
             try:
@@ -20,7 +20,8 @@ class UsersOrm:
                     async with conn.begin():
                         obj = Users(
                             telegram_id=telegram_id, username=username,
-                            password=hash_password, timezone=timezone
+                            password=hash_password, timezone=timezone,
+                            language=language
                         )
                         await conn.add(instance=obj)
                         await conn.commit()
@@ -57,12 +58,15 @@ class UsersOrm:
             await conn.aclose()
         return result
     
-    async def create_user(self, telegram_id: int, timezone: str):
+    async def create_user(
+        self, telegram_id: int, timezone: int, language: str
+    ):
         try:
             async with session() as conn:
                 async with conn.begin():
                     obj = Users(
-                        telegram_id=telegram_id, timezone=timezone
+                        telegram_id=telegram_id, timezone=timezone,
+                        language=language
                     )
                     conn.add(instance=obj)
                     await conn.commit()
@@ -72,7 +76,7 @@ class UsersOrm:
             logger.error(msg="Cannot register user:", exc_info=e)
             return False
         
-    async def change_timezone(self, telegram_id: int, timezone: str):
+    async def change_timezone(self, telegram_id: int, timezone: int):
         try:
             async with session() as conn:
                 async with conn.begin():

@@ -14,12 +14,12 @@ class EventsOrm:
 
     async def get_active_user_events(self, telegram_id: int):
         async with session() as conn:
-            users = await conn.execute(select(Events).where(
+            events = await conn.execute(select(Events).where(
                 and_(
                     Events.telegram_id == telegram_id, 
                     Events.is_finished == False
             )))
-            result = users.scalars().fetchall()
+            result = events.scalars().fetchall()
             await conn.aclose()
         return result
     
@@ -38,18 +38,64 @@ class EventsOrm:
     async def create_event(
         self, telegram_id: int, title: str, date: datetime
     ):
-        async with session() as conn:
-            async with conn.begin():
-                obj = Events(
-                    title=title, date=date, is_finished=False,
-                    telegram_id=telegram_id
-                )
-                conn.add(instance=obj)
-                await conn.commit()
-            await conn.aclose()
-        return True
+        try:
+            async with session() as conn:
+                async with conn.begin():
+                    obj = Events(
+                        title=title, date=date, is_finished=False,
+                        telegram_id=telegram_id
+                    )
+                    conn.add(instance=obj)
+                    await conn.commit()
+                await conn.aclose()
+            return True
+        except Exception as e:
+            logger.error(msg="Cannot create event:", exc_info=e)
+            return False
 
     async def update_event(
         self, event_id: int, title: str, date: datetime
     ):
-        pass
+        try:
+            async with session() as conn:
+                async with conn.begin():
+                    stmt = update(Events).where(and_(
+                        Events.id == event_id, 
+                        Events.is_finished == False
+                    )).values(title=title, date=date)
+                    await conn.execute(statement=stmt)
+                    await conn.commit()
+                await conn.aclose()
+            return True
+        except Exception as e:
+            logger.error(msg="Cannot update event:", exc_info=e)
+            return False
+        
+    async def finish_event(self, event_id):
+        try:
+            async with session() as conn:
+                async with conn.begin():
+                    stmt = update(Events).where(and_(
+                        Events.id == event_id, 
+                        Events.is_finished == False
+                    )).values(is_finished=True)
+                    await conn.execute(statement=stmt)
+                    await conn.commit()
+                await conn.aclose()
+            return True
+        except Exception as e:
+            logger.error(msg="Cannot finish event:", exc_info=e)
+            return False
+        
+    async def get_event(self, event_id: int):
+        async with session() as conn:
+            users = await conn.execute(select(Events).where(
+                and_(
+                    Events.id == event_id, 
+                    Events.is_finished == False
+            )))
+            result = users.scalar_one_or_none()
+            await conn.aclose()
+        return result
+    
+    

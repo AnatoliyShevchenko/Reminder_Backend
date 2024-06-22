@@ -1,17 +1,15 @@
 # FastAPI
-from fastapi import APIRouter, status, Response, HTTPException, Depends, Request
+from fastapi import APIRouter, status, Response, HTTPException, Depends
 
 # Local
 from src.apps.abstract.schemas import ResponseSchema
-from src.settings.const import ADMIN_ID
 from .schemas import (
     UserSchema, UsersSchema, CreateUserSchema, 
     CreateAdminSchema, AuthsSchema, TokenSchema,
 )
 from .orm import UsersOrm
-from .models import Users
 from .auths import make_password, verify_password, create_access_token
-from .depends import check_admin, check_token
+from .depends import check_admin
 
 
 class AdminView:
@@ -107,6 +105,11 @@ class UsersView:
 
     async def get(self):
         users = await self.orm.get_all_users()
+        if not users:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="no users founded"
+            )
         temp = [i.__dict__ for i in users]
         schema = UsersSchema(response=temp)
         return schema
