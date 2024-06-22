@@ -1,3 +1,6 @@
+# Python
+from typing import Optional
+
 # Pydantic
 from pydantic import BaseModel, Field
 
@@ -7,8 +10,8 @@ class UserSchema(BaseModel):
     telegram_id: int = Field(ge=0)
     timezone: int = Field(ge=-11, le=13)
     language: str = Field()
-    username: str
-    password: str
+    username: Optional[str] = Field(min_length=5, max_length=50)
+    password: Optional[str] = Field(min_length=10, max_length=32)
 
 
 class UsersSchema(BaseModel):

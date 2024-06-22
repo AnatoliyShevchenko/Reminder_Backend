@@ -44,7 +44,7 @@ class AdminView:
         is_success: bool = await self.orm.register_admin(
             telegram_id=obj.telegram_id, username=obj.username,
             hash_password=make_password(password=obj.password),
-            timezone=obj.timezone
+            timezone=obj.timezone, language=obj.language
         )
         if is_success:
             return ResponseSchema(response="Admin registered success!")
@@ -132,7 +132,8 @@ class UsersView(RedisUtils):
     async def post(self, obj: CreateUserSchema, response: Response):
         data = CreateUserSchema.model_validate(obj=obj)
         created = await self.orm.create_user(
-            telegram_id=data.telegram_id, timezone=data.timezone
+            telegram_id=data.telegram_id, timezone=data.timezone,
+            language=data.language
         )
         if not created:
             response.status_code=status.HTTP_400_BAD_REQUEST
