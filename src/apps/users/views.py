@@ -3,6 +3,7 @@ from fastapi import APIRouter, status, Response, HTTPException, Depends
 
 # Local
 from src.apps.abstract.schemas import ResponseSchema
+from src.apps.abstract.redis_utils import RedisUtils
 from .schemas import (
     UserSchema, UsersSchema, CreateUserSchema, 
     CreateAdminSchema, AuthsSchema, TokenSchema,
@@ -74,7 +75,7 @@ class AdminView:
         return TokenSchema(access_token=token)
 
 
-class UsersView:
+class UsersView(RedisUtils):
     """View for Users."""
 
     def __init__(self) -> None:
@@ -85,7 +86,7 @@ class UsersView:
             path=self.path, endpoint=self.get, methods=["GET"], 
             responses={
                 200: {"model": UsersSchema},
-                403: {"model": None}
+                400: {"model": None}
             }
         )
         self.router.add_api_route(
@@ -104,20 +105,28 @@ class UsersView:
         )
 
     async def get(self):
-        users = await self.orm.get_all_users()
+        key = "all_users"
+        users = await self.a_get_from_redis(key=key)
         if not users:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, 
-                detail="no users founded"
-            )
+            users = await self.orm.get_all_users()
+            if not users:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, 
+                    detail="no users founded"
+                )
+            await self.a_set_to_redis(key=key, value=users)
         temp = [i.__dict__ for i in users]
         schema = UsersSchema(response=temp)
         return schema
     
     async def retrieve(self, telegram_id: int):
-        data = await self.orm.get_user(telegram_id=telegram_id)
+        key = f"user_{telegram_id}"
+        data = await self.a_get_from_redis(key=key)
         if not data:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+            data = await self.orm.get_user(telegram_id=telegram_id)
+            if not data:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+            await self.a_set_to_redis(key=key, value=data)
         return UserSchema.model_validate(obj=data.__dict__)
 
     async def post(self, obj: CreateUserSchema, response: Response):
@@ -128,6 +137,7 @@ class UsersView:
         if not created:
             response.status_code=status.HTTP_400_BAD_REQUEST
             return ResponseSchema(response="For some reasons we can't register you")
+        await self.a_remove_key_from_redis(key="all_users")
         return ResponseSchema(response="Success")
     
 
